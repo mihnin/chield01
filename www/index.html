@@ -8,11 +8,17 @@
     <meta name="format-detection" content="telephone=no">
     <meta name="msapplication-tap-highlight" content="no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Калькулятор-Тренажер</title>
+    <meta name="theme-color" content="#0284c7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Супер-тренажер">
+    <link rel="apple-touch-icon" href="img/logo.png">
+    <title>Супер-тренажер</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/pwa-styles.css">
     <style>
         body { font-family: 'Nunito', sans-serif; background: #f0f9ff; }
         .main-container { max-width: 900px; margin: 2rem auto; padding: 1.5rem; background: white; border-radius: 24px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
@@ -75,6 +81,8 @@
 
     <!-- Скрипт Cordova должен быть подключен перед вашим основным скриптом -->
     <script type="text/javascript" src="cordova.js"></script>
+    <script type="text/javascript" src="js/network-status.js"></script>
+    <script type="text/javascript" src="js/app-lifecycle.js"></script>
     <script type="text/javascript">
         // Ожидание события deviceready от Cordova
         document.addEventListener('deviceready', onDeviceReady, false);
@@ -1415,6 +1423,88 @@
             // Делаем колесо более заметным
             wheel.style.width = "280px";
             wheel.style.height = "280px";
+        }
+    </script>
+    
+    <!-- PWA Installation -->
+    <div id="pwa-install-container" class="hidden fixed bottom-0 left-0 right-0 p-4 bg-blue-600 text-white shadow-lg z-50">
+        <div class="flex justify-between items-center">
+            <div>
+                <p class="font-bold">Установите приложение</p>
+                <p class="text-sm">Чтобы использовать без интернета</p>
+            </div>
+            <div class="flex gap-2">
+                <button id="pwa-install-button" class="bg-white text-blue-600 px-4 py-2 rounded-lg font-bold">Установить</button>
+                <button id="pwa-close-button" class="bg-blue-500 px-2 py-2 rounded-lg">✕</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- PWA and Service Worker Registration -->
+    <script type="text/javascript">
+        // Переменные для установки PWA
+        let deferredPrompt;
+        const installContainer = document.getElementById('pwa-install-container');
+        const installButton = document.getElementById('pwa-install-button');
+        const closeButton = document.getElementById('pwa-close-button');
+        
+        // Регистрация сервис-воркера
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker зарегистрирован успешно:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Ошибка при регистрации ServiceWorker:', error);
+                    });
+            });
+        }
+        
+        // Обработка события перед установкой
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Предотвращаем автоматический показ диалога установки
+            e.preventDefault();
+            // Сохраняем событие для использования позже
+            deferredPrompt = e;
+            // Показываем наш интерфейс установки
+            installContainer.classList.remove('hidden');
+        });
+        
+        // Событие успешной установки
+        window.addEventListener('appinstalled', () => {
+            // Скрываем интерфейс установки
+            installContainer.classList.add('hidden');
+            // Очищаем сохраненное событие
+            deferredPrompt = null;
+            console.log('PWA установлено успешно');
+        });
+        
+        // Обработчик кнопки установки
+        if (installButton) {
+            installButton.addEventListener('click', async () => {
+                if (!deferredPrompt) return;
+                
+                // Показываем диалог установки
+                deferredPrompt.prompt();
+                
+                // Ожидаем ответа пользователя
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`Пользователь ${outcome === 'accepted' ? 'принял' : 'отклонил'} установку`);
+                
+                // Используем событие только один раз
+                deferredPrompt = null;
+                
+                // Скрываем наш интерфейс установки
+                installContainer.classList.add('hidden');
+            });
+        }
+        
+        // Обработчик кнопки закрытия
+        if (closeButton) {
+            closeButton.addEventListener('click', () => {
+                installContainer.classList.add('hidden');
+            });
         }
     </script>
 </body>
