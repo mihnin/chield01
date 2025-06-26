@@ -16,10 +16,14 @@
     "platforms": [
       "android",
       "browser"
-    ]
+    ],
+    "plugins": {
+      "cordova-plugin-purchase": {}
+    }
   },
   "devDependencies": {
     "cordova-android": "^14.0.1",
-    "cordova-browser": "^7.0.0"
+    "cordova-browser": "^7.0.0",
+    "cordova-plugin-purchase": "^13.12.1"
   }
 }
