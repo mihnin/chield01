@@ -92,9 +92,34 @@
         const calendarMenu = document.getElementById('calendar-menu');
         const modeContainer = document.getElementById('mode-container');
 
-        let state = { currentModule: null, currentMode: null };
+        let state = { currentModule: null, currentMode: null, isPremium: false };
         let sprintState = {};
         let examState = {};
+        
+        // Функция для проверки доступа к платному контенту
+        function isPremiumContent(num1, num2) {
+            return (num1 > 3 || num2 > 3) && !state.isPremium;
+        }
+        
+        // Функция для покупки премиум-версии
+        function purchasePremium() {
+            // В реальном приложении здесь была бы интеграция с платежной системой
+            state.isPremium = true;
+            alert('Поздравляем! Вы приобрели полную версию приложения!');
+            
+            // Перерисовываем текущий режим, если он активен
+            if (state.currentMode) {
+                const initFunction = modeInitializers[state.currentMode];
+                if (initFunction) initFunction();
+            } else if (state.currentModule) {
+                // Если мы в меню модуля, перерисовываем его
+                renderSubMenu(state.currentModule);
+            }
+            
+            // Скрываем баннер премиум, если он есть
+            const premiumBanner = document.getElementById('premium-banner');
+            if (premiumBanner) premiumBanner.classList.add('hidden');
+        }
 
         function showTopMenu() {
             [multiplicationMenu, timeMenu, calendarMenu, modeContainer].forEach(el => el.classList.add('hidden'));
@@ -132,8 +157,8 @@
                 'multiplication': {
                     title: "Мастер Умножения", color: "blue", buttons: [
                         { id: 'cards', text: 'Карточки со стихами' }, { id: 'visualizer', text: 'Визуализатор' },
-                        { id: 'pythagoras', text: 'Таблица Пифагора' }, { id: 'factors', text: 'Найди множители' },
-                        { id: 'sprint', text: 'Спринт на время' }, { id: 'exam', text: 'Финальный Экзамен' }
+                        { id: 'pythagoras', text: 'Таблица Пифагора' }, { id: 'factors', text: 'Найди множители', premium: true },
+                        { id: 'sprint', text: 'Спринт на время', premium: true }, { id: 'exam', text: 'Финальный Экзамен', premium: true }
                     ]
                 },
                 'time': {
@@ -153,8 +178,25 @@
             container.innerHTML = `
                 <button onclick="showTopMenu()" class="mb-6 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 font-semibold">‹ Главное меню</button>
                 <h2 class="text-3xl font-bold text-center text-${data.color}-600 mb-6">${data.title}</h2>
+                ${!state.isPremium ? `
+                <div id="premium-banner" class="bg-amber-100 border-2 border-amber-300 p-4 rounded-xl mb-6">
+                    <p class="text-center text-amber-800 mb-2"><strong>Бесплатная версия:</strong> Таблица умножения доступна только до 3!</p>
+                    <div class="text-center">
+                        <button onclick="purchasePremium()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-bold">
+                            Разблокировать полную версию
+                        </button>
+                    </div>
+                </div>` : ''}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    ${data.buttons.map(btn => `<button onclick="startMode('${btn.id}')" class="mode-button p-6 text-xl text-center bg-${btn.color || data.color}-500 text-white rounded-2xl ${btn.full ? 'md:col-span-2' : ''}">${btn.text}</button>`).join('')}
+                    ${data.buttons.map(btn => `
+                        <button
+                            onclick="${btn.premium && !state.isPremium ? 'purchasePremium()' : `startMode('${btn.id}')`}"
+                            class="mode-button p-6 text-xl text-center ${btn.premium && !state.isPremium ? 'bg-gray-400' : `bg-${btn.color || data.color}-500`} text-white rounded-2xl ${btn.full ? 'md:col-span-2' : ''} relative overflow-hidden"
+                        >
+                            ${btn.text}
+                            ${btn.premium && !state.isPremium ? '<span class="absolute top-1 right-2 text-xs bg-amber-500 text-white px-2 py-1 rounded-full">PRO</span>' : ''}
+                        </button>
+                    `).join('')}
                 </div>`;
         }
 
@@ -171,12 +213,527 @@
         };
 
         // --- INITIALIZERS LOGIC ---
-        function initCardsMode(){const container=document.getElementById("cards-mode");container.innerHTML=`<h2 class="text-3xl font-bold text-center mb-4">Карточки со стихами</h2><div id="card-area" class="h-80 flex items-center justify-center"></div><div class="flex justify-center mt-4"><button id="next-card-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg">Следующая</button></div>`;const cardArea=container.querySelector("#card-area"),nextCardBtn=container.querySelector("#next-card-btn");function generateNewCard(){let num1=Math.floor(10*Math.random())+1,num2=Math.floor(10*Math.random())+1,answer=num1*num2,rhymeKey=`${Math.min(num1,num2)}x${Math.max(num1,num2)}`,association=rhymes[rhymeKey]||"Отличный пример!";cardArea.innerHTML=`<div id="interactive-card" class="card w-80 h-64 cursor-pointer"><div class="card-inner"><div class="card-face card-front"><p class="text-6xl font-extrabold">${num1} x ${num2}</p><p class="mt-4 text-sm font-light">(Нажми)</p></div><div class="card-face card-back"><p class="text-7xl font-extrabold">${answer}</p><p class="mt-2 text-center text-base px-2">${association}</p></div></div></div>`,cardArea.querySelector("#interactive-card").addEventListener("click",(e=>e.currentTarget.classList.toggle("is-flipped")))}generateNewCard(),nextCardBtn.onclick=generateNewCard}
-        function initVisualizerMode(){const container=document.getElementById("visualizer-mode");container.innerHTML=`<h2 class="text-3xl font-bold text-center mb-4">Визуализатор</h2><div class="flex justify-center items-center space-x-4 mb-6"><input type="number" id="v-num1" min="1" max="10" value="3" class="w-24 p-2 text-2xl text-center border-2 rounded-lg"><span class="text-2xl font-bold">х</span><input type="number" id="v-num2" min="1" max="10" value="4" class="w-24 p-2 text-2xl text-center border-2 rounded-lg"></div><div id="visualizer-grid" class="mx-auto border p-2" style="width:fit-content;display:grid;gap:4px"></div><p id="visualizer-result" class="text-center text-2xl font-bold mt-4"></p>`;const vNum1=container.querySelector("#v-num1"),vNum2=container.querySelector("#v-num2"),grid=container.querySelector("#visualizer-grid"),result=container.querySelector("#visualizer-result");function update(){const num1=parseInt(vNum1.value)||1,num2=parseInt(vNum2.value)||1;grid.innerHTML="",grid.style.gridTemplateColumns=`repeat(${num2}, 30px)`;for(let i=0;i<num1*num2;i++){const cell=document.createElement("div");cell.className="w-[30px] h-[30px] bg-green-400 rounded",grid.appendChild(cell)}result.textContent=`${num1} x ${num2} = ${num1*num2}`}vNum1.oninput=update,vNum2.oninput=update,update()}
-        function initPythagorasMode(){const container=document.getElementById("pythagoras-mode");container.innerHTML=`<h2 class="text-3xl font-bold text-center mb-2">Таблица Пифагора</h2><p class="text-center text-gray-500 mb-4">Нажми на любое число, чтобы увидеть, как оно получается. <br> Ответ будет <span class="text-red-500 font-bold">на пересечении</span>!</p><table id="pythagoras-table" class="mx-auto" style="border-collapse:collapse"></table>`;const table=container.querySelector("#pythagoras-table"),tbody=document.createElement("tbody"),header=document.createElement("tr");const th_empty = document.createElement("th"); th_empty.className="w-10 h-10"; header.appendChild(th_empty); for(let i=1;i<=10;i++){const th=document.createElement("th");th.textContent=i,th.dataset.col=i,th.className="w-10 h-10 text-center border font-bold cursor-pointer bg-gray-100",header.appendChild(th)}tbody.appendChild(header);for(let i=1;i<=10;i++){const tr=document.createElement("tr"),th=document.createElement("th");th.textContent=i,th.dataset.row=i,th.className="w-10 h-10 text-center border font-bold cursor-pointer bg-gray-100",tr.appendChild(th);for(let j=1;j<=10;j++){const td=document.createElement("td");td.textContent=j*i,td.dataset.row=i,td.dataset.col=j,td.className="w-10 h-10 text-center border font-bold cursor-pointer",tr.appendChild(td)}tbody.appendChild(tr)}table.appendChild(tbody),table.addEventListener("click",(e=>{const target=e.target;if("TD"!==target.tagName)return;table.querySelectorAll("td, th").forEach((e=>{e.style.backgroundColor="",e.style.color=""}));const row=target.dataset.row,col=target.dataset.col;table.querySelectorAll(`[data-row="${row}"]`).forEach((e=>e.style.backgroundColor="#93c5fd")),table.querySelectorAll(`[data-col="${col}"]`).forEach((e=>e.style.backgroundColor="#93c5fd")),target.style.backgroundColor="#ef4444",target.style.color="white"}))}
-        function initFactorsMode(){const container=document.getElementById("factors-mode");container.innerHTML=`<h2 class="text-3xl font-bold text-center mb-4">Найди множители</h2><div class="text-center bg-orange-100 p-8 rounded-2xl"><p id="factors-question" class="text-8xl font-extrabold text-orange-600 mb-6"></p><div class="flex justify-center items-center space-x-4 mb-4"><input type="number" id="factor-1" class="w-28 p-3 text-3xl text-center border-4 rounded-lg"><span class="text-3xl font-bold">x</span><input type="number" id="factor-2" class="w-28 p-3 text-3xl text-center border-4 rounded-lg"></div><button id="check-factors-btn" class="bg-orange-500 text-white font-bold py-3 px-8 rounded-full text-lg">Проверить</button><div id="factors-feedback" class="mt-4 text-2xl font-bold h-8"></div></div>`;const qEl=container.querySelector("#factors-question"),f1El=container.querySelector("#factor-1"),f2El=container.querySelector("#factor-2"),btn=container.querySelector("#check-factors-btn"),fbEl=container.querySelector("#factors-feedback");let product=0;function nextQ(){const num1=Math.floor(10*Math.random())+1,num2=Math.floor(10*Math.random())+1;product=num1*num2,qEl.textContent=product,f1El.value="",f2El.value="",fbEl.textContent="",f1El.focus()}function check(){fbEl.classList.remove("text-green-500","text-red-500"),parseInt(f1El.value)*parseInt(f2El.value)===product?(fbEl.textContent="Идеально! 🎉",fbEl.classList.add("text-green-500"),setTimeout(nextQ,1500)):(fbEl.textContent="Попробуй еще!",fbEl.classList.add("text-red-500"))}btn.onclick=check,f2El.addEventListener("keyup",(e=>{"Enter"===e.key&&check()})),nextQ()}
-        function initSprintMode(){const container=document.getElementById("sprint-mode");container.innerHTML=`<h2 class="text-3xl font-bold text-center mb-1">Спринт!</h2><div id="sprint-intro"><p class="text-center text-gray-600 mb-6">Дай как можно больше правильных ответов за 60 секунд!</p><div class="text-center"><button id="start-sprint-btn" class="bg-yellow-500 text-white font-bold py-4 px-10 rounded-full text-xl">Начать!</button></div></div><div id="sprint-game" class="hidden text-center"><div class="flex justify-around items-center mb-6 bg-gray-100 p-4 rounded-xl"><div><span class="font-bold">Счет: </span><span id="sprint-score" class="text-2xl font-bold text-green-600">0</span></div><div><span class="font-bold">Время: </span><span id="sprint-timer" class="text-2xl font-bold text-red-600">60</span></div></div><p id="sprint-question" class="text-6xl font-extrabold mb-6"></p><input type="number" id="sprint-answer" class="w-48 mx-auto p-3 text-4xl text-center border-4 rounded-lg"><div id="sprint-feedback" class="mt-4 text-3xl font-bold h-10"></div></div>`;const intro=container.querySelector("#sprint-intro"),game=container.querySelector("#sprint-game"),answerEl=container.querySelector("#sprint-answer"),scoreEl=container.querySelector("#sprint-score"),timerEl=container.querySelector("#sprint-timer"),questionEl=container.querySelector("#sprint-question"),feedbackEl=container.querySelector("#sprint-feedback");sprintState={score:0,timeLeft:60,currentAnswer:0,timerId:null};container.querySelector("#start-sprint-btn").onclick=()=>{sprintState.score=0,sprintState.timeLeft=60,scoreEl.textContent=sprintState.score,timerEl.textContent=sprintState.timeLeft,intro.classList.add("hidden"),game.classList.remove("hidden"),nextSprintQuestion(),answerEl.focus(),sprintState.timerId=setInterval(()=>{sprintState.timeLeft--,timerEl.textContent=sprintState.timeLeft,sprintState.timeLeft<=0&&endSprint()},1e3)};function nextSprintQuestion(){const num1=Math.floor(10*Math.random())+1,num2=Math.floor(10*Math.random())+1;sprintState.currentAnswer=num1*num2,questionEl.textContent=`${num1} x ${num2}`,answerEl.value=""}function endSprint(){clearInterval(sprintState.timerId),game.classList.add("hidden"),intro.classList.remove("hidden"),feedbackEl.textContent="",alert(`Время вышло! Ваш счет: ${sprintState.score}.`)}answerEl.addEventListener("keyup",(e=>{sprintState.timeLeft>0&&String(answerEl.value).length>=String(sprintState.currentAnswer).length&&function(){const userAnswer=parseInt(answerEl.value);feedbackEl.classList.remove("text-green-500","text-red-500"),userAnswer===sprintState.currentAnswer?(sprintState.score++,scoreEl.textContent=sprintState.score,feedbackEl.textContent="Верно! ✨",feedbackEl.classList.add("text-green-500")):(feedbackEl.textContent=`Ошибка! Ответ: ${sprintState.currentAnswer}`,feedbackEl.classList.add("text-red-500")),setTimeout((()=>{sprintState.timeLeft>0&&(nextSprintQuestion(),feedbackEl.textContent="")}),1e3)}()}))}
-        function initExamMode(){const container=document.getElementById("exam-mode");container.innerHTML=`<h2 class="text-3xl font-bold text-center mb-1">Финальный Экзамен</h2><div id="exam-intro"><p class="text-center text-gray-600 mb-6">Ответь правильно на 10 вопросов!</p><div class="text-center"><button id="start-exam-btn" class="bg-red-500 text-white font-bold py-4 px-10 rounded-full text-xl">Начать экзамен</button></div></div><div id="exam-game" class="hidden text-center"><p class="text-right font-bold mb-4">Вопрос <span id="exam-q-current">1</span> из <span id="exam-q-total">10</span></p><div class="w-full bg-gray-200 rounded-full h-4 mb-6"><div id="exam-progress-bar" class="bg-red-500 h-4 rounded-full" style="width:10%"></div></div><p id="exam-question" class="text-6xl font-extrabold mb-6"></p><input type="number" id="exam-answer" class="w-48 mx-auto p-3 text-4xl text-center border-4 rounded-lg"><div id="exam-feedback" class="mt-4 text-3xl font-bold h-10"></div></div>`;const intro=container.querySelector("#exam-intro"),game=container.querySelector("#exam-game"),answerEl=container.querySelector("#exam-answer"),qTotalEl=container.querySelector("#exam-q-total"),qCurrentEl=container.querySelector("#exam-q-current"),progress=container.querySelector("#exam-progress-bar"),questionEl=container.querySelector("#exam-question"),feedbackEl=container.querySelector("#exam-feedback");examState={questions:[],currentQIndex:0,correctAnswers:0,totalQuestions:10};container.querySelector("#start-exam-btn").onclick=function(){examState.questions=[],examState.currentQIndex=0,examState.correctAnswers=0;const allQuestions=new Set;for(;allQuestions.size<examState.totalQuestions;){const num1=Math.floor(10*Math.random())+1,num2=Math.floor(10*Math.random())+1;allQuestions.add(`${num1}x${num2}`)}examState.questions=Array.from(allQuestions).map((e=>{const[t,n]=e.split("x").map(Number);return{num1:t,num2:n,answer:t*n}})),qTotalEl.textContent=examState.totalQuestions,intro.classList.add("hidden"),game.classList.remove("hidden"),displayExamQuestion(),answerEl.focus()};function displayExamQuestion(){if(examState.currentQIndex>=examState.totalQuestions)return void function(){game.classList.add("hidden"),intro.classList.remove("hidden");let e=`Экзамен окончен! ${examState.correctAnswers} из ${examState.totalQuestions}.`;e+=examState.correctAnswers/examState.totalQuestions>=.8?" 🏆 Поздравляю, ты Мастер!":" 👍 Хорошая попытка!",alert(e)}();const q=examState.questions[examState.currentQIndex];questionEl.textContent=`${q.num1} x ${q.num2}`,answerEl.value="",qCurrentEl.textContent=examState.currentQIndex+1,progress.style.width=`${(examState.currentQIndex+1)/examState.totalQuestions*100}%`}answerEl.addEventListener("keyup",(e=>{"Enter"===e.key&&function(){const userAnswer=parseInt(answerEl.value),currentQuestion=examState.questions[examState.currentQIndex];feedbackEl.classList.remove("text-green-500","text-red-500"),userAnswer===currentQuestion.answer?(examState.correctAnswers++,feedbackEl.textContent="Правильно!",feedbackEl.classList.add("text-green-500")):(feedbackEl.textContent=`Неверно. Ответ: ${currentQuestion.answer}`,feedbackEl.classList.add("text-red-500")),answerEl.disabled=!0,setTimeout((()=>{examState.currentQIndex++,feedbackEl.textContent="",answerEl.disabled=!1,displayExamQuestion(),answerEl.focus()}),1500)}()}))}
+        function initCardsMode(){
+            const container=document.getElementById("cards-mode");
+            container.innerHTML=`
+                <h2 class="text-3xl font-bold text-center mb-4">Карточки со стихами</h2>
+                ${!state.isPremium ? `
+                <div class="bg-amber-100 border-2 border-amber-300 p-4 rounded-xl mb-6">
+                    <p class="text-center text-amber-800 mb-2"><strong>Бесплатная версия:</strong> Доступны карточки с числами до 3!</p>
+                    <div class="text-center">
+                        <button onclick="purchasePremium()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-bold">
+                            Разблокировать полную версию
+                        </button>
+                    </div>
+                </div>` : ''}
+                <div id="card-area" class="h-80 flex items-center justify-center"></div>
+                <div class="flex justify-center mt-4">
+                    <button id="next-card-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg">Следующая</button>
+                </div>`;
+            
+            const cardArea=container.querySelector("#card-area");
+            const nextCardBtn=container.querySelector("#next-card-btn");
+            
+            function generateNewCard(){
+                // Ограничиваем генерацию чисел до 3 для бесплатной версии
+                const maxNum = state.isPremium ? 10 : 3;
+                
+                let num1=Math.floor(maxNum*Math.random())+1;
+                let num2=Math.floor(maxNum*Math.random())+1;
+                let answer=num1*num2;
+                let rhymeKey=`${Math.min(num1,num2)}x${Math.max(num1,num2)}`;
+                let association=rhymes[rhymeKey]||"Отличный пример!";
+                
+                cardArea.innerHTML=`<div id="interactive-card" class="card w-80 h-64 cursor-pointer">
+                    <div class="card-inner">
+                        <div class="card-face card-front">
+                            <p class="text-6xl font-extrabold">${num1} x ${num2}</p>
+                            <p class="mt-4 text-sm font-light">(Нажми)</p>
+                        </div>
+                        <div class="card-face card-back">
+                            <p class="text-7xl font-extrabold">${answer}</p>
+                            <p class="mt-2 text-center text-base px-2">${association}</p>
+                        </div>
+                    </div>
+                </div>`;
+                
+                cardArea.querySelector("#interactive-card").addEventListener("click",(e=>e.currentTarget.classList.toggle("is-flipped")));
+            }
+            
+            generateNewCard();
+            nextCardBtn.onclick=generateNewCard;
+        }
+        function initVisualizerMode(){
+            const container=document.getElementById("visualizer-mode");
+            const maxNum = state.isPremium ? 10 : 3;
+            
+            container.innerHTML=`
+                <h2 class="text-3xl font-bold text-center mb-4">Визуализатор</h2>
+                ${!state.isPremium ? `
+                <div class="bg-amber-100 border-2 border-amber-300 p-4 rounded-xl mb-6">
+                    <p class="text-center text-amber-800 mb-2"><strong>Бесплатная версия:</strong> Доступны числа только до 3!</p>
+                    <div class="text-center">
+                        <button onclick="purchasePremium()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-bold">
+                            Разблокировать полную версию
+                        </button>
+                    </div>
+                </div>` : ''}
+                <div class="flex justify-center items-center space-x-4 mb-6">
+                    <input type="number" id="v-num1" min="1" max="${maxNum}" value="${Math.min(3, maxNum)}" class="w-24 p-2 text-2xl text-center border-2 rounded-lg">
+                    <span class="text-2xl font-bold">х</span>
+                    <input type="number" id="v-num2" min="1" max="${maxNum}" value="${Math.min(3, maxNum)}" class="w-24 p-2 text-2xl text-center border-2 rounded-lg">
+                </div>
+                <div id="visualizer-grid" class="mx-auto border p-2" style="width:fit-content;display:grid;gap:4px"></div>
+                <p id="visualizer-result" class="text-center text-2xl font-bold mt-4"></p>`;
+                
+            const vNum1=container.querySelector("#v-num1");
+            const vNum2=container.querySelector("#v-num2");
+            const grid=container.querySelector("#visualizer-grid");
+            const result=container.querySelector("#visualizer-result");
+            
+            function update(){
+                let num1=parseInt(vNum1.value)||1;
+                let num2=parseInt(vNum2.value)||1;
+                
+                // Проверяем ограничения для бесплатной версии
+                if(!state.isPremium) {
+                    if(num1 > maxNum) {
+                        num1 = maxNum;
+                        vNum1.value = maxNum;
+                    }
+                    if(num2 > maxNum) {
+                        num2 = maxNum;
+                        vNum2.value = maxNum;
+                    }
+                }
+                
+                grid.innerHTML="";
+                grid.style.gridTemplateColumns=`repeat(${num2}, 30px)`;
+                
+                for(let i=0; i<num1*num2; i++){
+                    const cell=document.createElement("div");
+                    cell.className="w-[30px] h-[30px] bg-green-400 rounded";
+                    grid.appendChild(cell);
+                }
+                
+                result.textContent=`${num1} x ${num2} = ${num1*num2}`;
+            }
+            
+            vNum1.oninput=update;
+            vNum2.oninput=update;
+            update();
+        }
+        function initPythagorasMode(){
+            const container=document.getElementById("pythagoras-mode");
+            const maxNum = state.isPremium ? 10 : 3;
+            
+            container.innerHTML=`
+                <h2 class="text-3xl font-bold text-center mb-2">Таблица Пифагора</h2>
+                <p class="text-center text-gray-500 mb-4">Нажми на любое число, чтобы увидеть, как оно получается. <br> Ответ будет <span class="text-red-500 font-bold">на пересечении</span>!</p>
+                ${!state.isPremium ? `
+                <div class="bg-amber-100 border-2 border-amber-300 p-4 rounded-xl mb-6">
+                    <p class="text-center text-amber-800 mb-2"><strong>Бесплатная версия:</strong> Таблица Пифагора доступна только до 3!</p>
+                    <div class="text-center">
+                        <button onclick="purchasePremium()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-bold">
+                            Разблокировать полную версию
+                        </button>
+                    </div>
+                </div>` : ''}
+                <table id="pythagoras-table" class="mx-auto" style="border-collapse:collapse"></table>`;
+                
+            const table=container.querySelector("#pythagoras-table");
+            const tbody=document.createElement("tbody");
+            const header=document.createElement("tr");
+            
+            // Создаем пустую ячейку в левом верхнем углу
+            const th_empty = document.createElement("th");
+            th_empty.className="w-10 h-10";
+            header.appendChild(th_empty);
+            
+            // Создаем заголовок таблицы (горизонтальные числа)
+            for(let i=1; i<=10; i++){
+                const th=document.createElement("th");
+                th.textContent=i;
+                th.dataset.col=i;
+                
+                // Если число > maxNum и нет премиума, делаем ячейку неактивной
+                if(i > maxNum && !state.isPremium) {
+                    th.className="w-10 h-10 text-center border font-bold bg-gray-300 text-gray-500";
+                    th.dataset.premium = "true";
+                } else {
+                    th.className="w-10 h-10 text-center border font-bold cursor-pointer bg-gray-100";
+                }
+                
+                header.appendChild(th);
+            }
+            tbody.appendChild(header);
+            
+            // Создаем строки таблицы
+            for(let i=1; i<=10; i++){
+                const tr=document.createElement("tr");
+                const th=document.createElement("th");
+                
+                th.textContent=i;
+                th.dataset.row=i;
+                
+                // Если число > maxNum и нет премиума, делаем ячейку неактивной
+                if(i > maxNum && !state.isPremium) {
+                    th.className="w-10 h-10 text-center border font-bold bg-gray-300 text-gray-500";
+                    th.dataset.premium = "true";
+                } else {
+                    th.className="w-10 h-10 text-center border font-bold cursor-pointer bg-gray-100";
+                }
+                
+                tr.appendChild(th);
+                
+                // Создаем ячейки со значениями
+                for(let j=1; j<=10; j++){
+                    const td=document.createElement("td");
+                    td.textContent=j*i;
+                    td.dataset.row=i;
+                    td.dataset.col=j;
+                    
+                    // Если ячейка относится к премиум-части
+                    if((i > maxNum || j > maxNum) && !state.isPremium) {
+                        td.className="w-10 h-10 text-center border bg-gray-300 text-gray-500";
+                        td.dataset.premium = "true";
+                    } else {
+                        td.className="w-10 h-10 text-center border font-bold cursor-pointer";
+                    }
+                    
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            }
+            
+            table.appendChild(tbody);
+            
+            // Обработчик нажатий на ячейки
+            table.addEventListener("click", (e => {
+                const target = e.target;
+                
+                // Если нажали на неактивную ячейку и пользователь не премиум
+                if(target.dataset.premium === "true" && !state.isPremium) {
+                    purchasePremium();
+                    return;
+                }
+                
+                // Для обычных ячеек продолжаем как раньше
+                if("TD" !== target.tagName) return;
+                
+                table.querySelectorAll("td, th").forEach((e => {
+                    e.style.backgroundColor = "";
+                    e.style.color = "";
+                }));
+                
+                const row = target.dataset.row;
+                const col = target.dataset.col;
+                
+                table.querySelectorAll(`[data-row="${row}"]`).forEach((e => e.style.backgroundColor = "#93c5fd"));
+                table.querySelectorAll(`[data-col="${col}"]`).forEach((e => e.style.backgroundColor = "#93c5fd"));
+                
+                target.style.backgroundColor = "#ef4444";
+                target.style.color = "white";
+            }));
+        }
+        function initFactorsMode(){
+            const container=document.getElementById("factors-mode");
+            
+            container.innerHTML=`
+                <h2 class="text-3xl font-bold text-center mb-4">Найди множители</h2>
+                ${!state.isPremium ? `
+                <div class="bg-amber-100 border-2 border-amber-300 p-4 rounded-xl mb-6">
+                    <p class="text-center text-amber-800 mb-2"><strong>Бесплатная версия:</strong> Доступны задания с числами до 3!</p>
+                    <div class="text-center">
+                        <button onclick="purchasePremium()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-bold">
+                            Разблокировать полную версию
+                        </button>
+                    </div>
+                </div>` : ''}
+                <div class="text-center bg-orange-100 p-8 rounded-2xl">
+                    <p id="factors-question" class="text-8xl font-extrabold text-orange-600 mb-6"></p>
+                    <div class="flex justify-center items-center space-x-4 mb-4">
+                        <input type="number" id="factor-1" class="w-28 p-3 text-3xl text-center border-4 rounded-lg">
+                        <span class="text-3xl font-bold">x</span>
+                        <input type="number" id="factor-2" class="w-28 p-3 text-3xl text-center border-4 rounded-lg">
+                    </div>
+                    <button id="check-factors-btn" class="bg-orange-500 text-white font-bold py-3 px-8 rounded-full text-lg">Проверить</button>
+                    <div id="factors-feedback" class="mt-4 text-2xl font-bold h-8"></div>
+                </div>`;
+                
+            const qEl=container.querySelector("#factors-question");
+            const f1El=container.querySelector("#factor-1");
+            const f2El=container.querySelector("#factor-2");
+            const btn=container.querySelector("#check-factors-btn");
+            const fbEl=container.querySelector("#factors-feedback");
+            
+            let product=0;
+            
+            function nextQ(){
+                // Ограничиваем генерацию чисел до 3 для бесплатной версии
+                const maxNum = state.isPremium ? 10 : 3;
+                
+                const num1=Math.floor(maxNum*Math.random())+1;
+                const num2=Math.floor(maxNum*Math.random())+1;
+                
+                product=num1*num2;
+                qEl.textContent=product;
+                f1El.value="";
+                f2El.value="";
+                fbEl.textContent="";
+                f1El.focus();
+            }
+            
+            function check(){
+                fbEl.classList.remove("text-green-500","text-red-500");
+                
+                if(parseInt(f1El.value)*parseInt(f2El.value)===product){
+                    fbEl.textContent="Идеально! 🎉";
+                    fbEl.classList.add("text-green-500");
+                    setTimeout(nextQ,1500);
+                } else {
+                    fbEl.textContent="Попробуй еще!";
+                    fbEl.classList.add("text-red-500");
+                }
+            }
+            
+            btn.onclick=check;
+            f2El.addEventListener("keyup",(e => {
+                if("Enter"===e.key) check();
+            }));
+            
+            nextQ();
+        }
+        function initSprintMode(){
+            const container=document.getElementById("sprint-mode");
+            
+            container.innerHTML=`
+                <h2 class="text-3xl font-bold text-center mb-1">Спринт!</h2>
+                ${!state.isPremium ? `
+                <div class="bg-amber-100 border-2 border-amber-300 p-4 rounded-xl mb-6">
+                    <p class="text-center text-amber-800 mb-2"><strong>Бесплатная версия:</strong> Доступны числа только до 3!</p>
+                    <div class="text-center">
+                        <button onclick="purchasePremium()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-bold">
+                            Разблокировать полную версию
+                        </button>
+                    </div>
+                </div>` : ''}
+                <div id="sprint-intro">
+                    <p class="text-center text-gray-600 mb-6">Дай как можно больше правильных ответов за 60 секунд!</p>
+                    <div class="text-center">
+                        <button id="start-sprint-btn" class="bg-yellow-500 text-white font-bold py-4 px-10 rounded-full text-xl">Начать!</button>
+                    </div>
+                </div>
+                <div id="sprint-game" class="hidden text-center">
+                    <div class="flex justify-around items-center mb-6 bg-gray-100 p-4 rounded-xl">
+                        <div><span class="font-bold">Счет: </span><span id="sprint-score" class="text-2xl font-bold text-green-600">0</span></div>
+                        <div><span class="font-bold">Время: </span><span id="sprint-timer" class="text-2xl font-bold text-red-600">60</span></div>
+                    </div>
+                    <p id="sprint-question" class="text-6xl font-extrabold mb-6"></p>
+                    <input type="number" id="sprint-answer" class="w-48 mx-auto p-3 text-4xl text-center border-4 rounded-lg">
+                    <div id="sprint-feedback" class="mt-4 text-3xl font-bold h-10"></div>
+                </div>`;
+            
+            const intro=container.querySelector("#sprint-intro");
+            const game=container.querySelector("#sprint-game");
+            const answerEl=container.querySelector("#sprint-answer");
+            const scoreEl=container.querySelector("#sprint-score");
+            const timerEl=container.querySelector("#sprint-timer");
+            const questionEl=container.querySelector("#sprint-question");
+            const feedbackEl=container.querySelector("#sprint-feedback");
+            
+            sprintState={
+                score:0,
+                timeLeft:60,
+                currentAnswer:0,
+                timerId:null
+            };
+            
+            container.querySelector("#start-sprint-btn").onclick=()=>{
+                sprintState.score=0;
+                sprintState.timeLeft=60;
+                scoreEl.textContent=sprintState.score;
+                timerEl.textContent=sprintState.timeLeft;
+                intro.classList.add("hidden");
+                game.classList.remove("hidden");
+                nextSprintQuestion();
+                answerEl.focus();
+                
+                sprintState.timerId=setInterval(()=>{
+                    sprintState.timeLeft--;
+                    timerEl.textContent=sprintState.timeLeft;
+                    if(sprintState.timeLeft<=0) endSprint();
+                },1e3);
+            };
+            
+            function nextSprintQuestion(){
+                // Ограничиваем генерацию чисел до 3 для бесплатной версии
+                const maxNum = state.isPremium ? 10 : 3;
+                
+                const num1=Math.floor(maxNum*Math.random())+1;
+                const num2=Math.floor(maxNum*Math.random())+1;
+                
+                sprintState.currentAnswer=num1*num2;
+                questionEl.textContent=`${num1} x ${num2}`;
+                answerEl.value="";
+            }
+            
+            function endSprint(){
+                clearInterval(sprintState.timerId);
+                game.classList.add("hidden");
+                intro.classList.remove("hidden");
+                feedbackEl.textContent="";
+                alert(`Время вышло! Ваш счет: ${sprintState.score}.`);
+            }
+            
+            answerEl.addEventListener("keyup",(e=>{
+                if(sprintState.timeLeft>0 && String(answerEl.value).length>=String(sprintState.currentAnswer).length) {
+                    const userAnswer=parseInt(answerEl.value);
+                    feedbackEl.classList.remove("text-green-500","text-red-500");
+                    
+                    if(userAnswer===sprintState.currentAnswer) {
+                        sprintState.score++;
+                        scoreEl.textContent=sprintState.score;
+                        feedbackEl.textContent="Верно! ✨";
+                        feedbackEl.classList.add("text-green-500");
+                    } else {
+                        feedbackEl.textContent=`Ошибка! Ответ: ${sprintState.currentAnswer}`;
+                        feedbackEl.classList.add("text-red-500");
+                    }
+                    
+                    setTimeout(()=>{
+                        if(sprintState.timeLeft>0) {
+                            nextSprintQuestion();
+                            feedbackEl.textContent="";
+                        }
+                    },1e3);
+                }
+            }));
+        }
+        function initExamMode(){
+            const container=document.getElementById("exam-mode");
+            
+            container.innerHTML=`
+                <h2 class="text-3xl font-bold text-center mb-1">Финальный Экзамен</h2>
+                ${!state.isPremium ? `
+                <div class="bg-amber-100 border-2 border-amber-300 p-4 rounded-xl mb-6">
+                    <p class="text-center text-amber-800 mb-2"><strong>Бесплатная версия:</strong> Доступны числа только до 3!</p>
+                    <div class="text-center">
+                        <button onclick="purchasePremium()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-bold">
+                            Разблокировать полную версию
+                        </button>
+                    </div>
+                </div>` : ''}
+                <div id="exam-intro">
+                    <p class="text-center text-gray-600 mb-6">Ответь правильно на 10 вопросов!</p>
+                    <div class="text-center">
+                        <button id="start-exam-btn" class="bg-red-500 text-white font-bold py-4 px-10 rounded-full text-xl">Начать экзамен</button>
+                    </div>
+                </div>
+                <div id="exam-game" class="hidden text-center">
+                    <p class="text-right font-bold mb-4">Вопрос <span id="exam-q-current">1</span> из <span id="exam-q-total">10</span></p>
+                    <div class="w-full bg-gray-200 rounded-full h-4 mb-6">
+                        <div id="exam-progress-bar" class="bg-red-500 h-4 rounded-full" style="width:10%"></div>
+                    </div>
+                    <p id="exam-question" class="text-6xl font-extrabold mb-6"></p>
+                    <input type="number" id="exam-answer" class="w-48 mx-auto p-3 text-4xl text-center border-4 rounded-lg">
+                    <div id="exam-feedback" class="mt-4 text-3xl font-bold h-10"></div>
+                </div>`;
+            
+            const intro=container.querySelector("#exam-intro");
+            const game=container.querySelector("#exam-game");
+            const answerEl=container.querySelector("#exam-answer");
+            const qTotalEl=container.querySelector("#exam-q-total");
+            const qCurrentEl=container.querySelector("#exam-q-current");
+            const progress=container.querySelector("#exam-progress-bar");
+            const questionEl=container.querySelector("#exam-question");
+            const feedbackEl=container.querySelector("#exam-feedback");
+            
+            examState={
+                questions:[],
+                currentQIndex:0,
+                correctAnswers:0,
+                totalQuestions:10
+            };
+            
+            container.querySelector("#start-exam-btn").onclick=function(){
+                examState.questions=[];
+                examState.currentQIndex=0;
+                examState.correctAnswers=0;
+                
+                // Ограничиваем генерацию чисел до 3 для бесплатной версии
+                const maxNum = state.isPremium ? 10 : 3;
+                const allQuestions=new Set;
+                
+                while(allQuestions.size<examState.totalQuestions){
+                    const num1=Math.floor(maxNum*Math.random())+1;
+                    const num2=Math.floor(maxNum*Math.random())+1;
+                    allQuestions.add(`${num1}x${num2}`);
+                }
+                
+                examState.questions=Array.from(allQuestions).map((e=>{
+                    const[t,n]=e.split("x").map(Number);
+                    return{num1:t,num2:n,answer:t*n};
+                }));
+                
+                qTotalEl.textContent=examState.totalQuestions;
+                intro.classList.add("hidden");
+                game.classList.remove("hidden");
+                displayExamQuestion();
+                answerEl.focus();
+            };
+            
+            function displayExamQuestion(){
+                if(examState.currentQIndex>=examState.totalQuestions) {
+                    return void endExam();
+                }
+                
+                const q=examState.questions[examState.currentQIndex];
+                questionEl.textContent=`${q.num1} x ${q.num2}`;
+                answerEl.value="";
+                qCurrentEl.textContent=examState.currentQIndex+1;
+                progress.style.width=`${(examState.currentQIndex+1)/examState.totalQuestions*100}%`;
+            }
+            
+            function endExam(){
+                game.classList.add("hidden");
+                intro.classList.remove("hidden");
+                
+                let message=`Экзамен окончен! ${examState.correctAnswers} из ${examState.totalQuestions}.`;
+                message += examState.correctAnswers/examState.totalQuestions>=.8 ?
+                    " 🏆 Поздравляю, ты Мастер!" :
+                    " 👍 Хорошая попытка!";
+                    
+                alert(message);
+            }
+            
+            answerEl.addEventListener("keyup",(e=>{
+                if("Enter"===e.key) {
+                    const userAnswer=parseInt(answerEl.value);
+                    const currentQuestion=examState.questions[examState.currentQIndex];
+                    feedbackEl.classList.remove("text-green-500","text-red-500");
+                    
+                    if(userAnswer===currentQuestion.answer) {
+                        examState.correctAnswers++;
+                        feedbackEl.textContent="Правильно!";
+                        feedbackEl.classList.add("text-green-500");
+                    } else {
+                        feedbackEl.textContent=`Неверно. Ответ: ${currentQuestion.answer}`;
+                        feedbackEl.classList.add("text-red-500");
+                    }
+                    
+                    answerEl.disabled=true;
+                    
+                    setTimeout(()=>{
+                        examState.currentQIndex++;
+                        feedbackEl.textContent="";
+                        answerEl.disabled=false;
+                        displayExamQuestion();
+                        answerEl.focus();
+                    },1500);
+                }
+            }));
+        }
         function initInteractiveClock(){const container=document.getElementById("interactive-clock-mode");container.innerHTML=`<h2 class="text-3xl font-bold text-center mb-4">Интерактивные Часы</h2><p class="text-center text-gray-500 mb-6">Двигай стрелки мышкой!</p><div id="interactive-clock" class="clock cursor-pointer"><div class="hand hour-hand"></div><div class="hand minute-hand"></div><div class="center-dot"></div></div><div id="digital-clock" class="text-center text-5xl font-extrabold mt-6 bg-gray-800 text-white p-4 rounded-xl w-48 mx-auto">12:00</div>`;const hourHand=container.querySelector(".hour-hand"),minuteHand=container.querySelector(".minute-hand"),digitalClock=container.querySelector("#digital-clock"),clock=container.querySelector("#interactive-clock");function setTime(hours,minutes){const minuteDeg=6*minutes,hourDeg=30*hours+minutes/2;minuteHand.style.transform=`translateX(-50%) rotate(${minuteDeg}deg)`,hourHand.style.transform=`translateX(-50%) rotate(${hourDeg}deg)`,digitalClock.textContent=`${String(0===hours?12:hours).padStart(2,"0")}:${String(minutes).padStart(2,"0")}`}function updateFromEvent(e){const rect=clock.getBoundingClientRect(),x=e.clientX-rect.left-rect.width/2,y=e.clientY-rect.top-rect.height/2;let angle=180*Math.atan2(y,x)/Math.PI+90;angle<0&&(angle+=360);const minutes=Math.floor(angle/6),hours=Math.floor(angle/30);setTime(hours,minutes)}clock.addEventListener("mousemove",(e=>{1===e.buttons&&updateFromEvent(e)})),clock.addEventListener("click",updateFromEvent),setTime(12,0)}
         function initTimeOfDay(){const container=document.getElementById("time-of-day-mode");container.innerHTML=`<h2 class="text-3xl font-bold text-center mb-4">Время Суток</h2><div id="time-of-day-container" class="p-6 rounded-2xl text-white text-center shadow-lg transition-all duration-500"><div id="tod-clock-display" class="text-6xl font-extrabold" style="text-shadow:2px 2px 4px rgba(0,0,0,0.5)">12:00</div><div id="tod-24h-display" class="text-2xl font-bold" style="text-shadow:1px 1px 2px rgba(0,0,0,0.5)">(12:00)</div><div id="tod-label" class="text-3xl font-bold mt-4" style="text-shadow:2px 2px 4px rgba(0,0,0,0.5)">Полдень ☀️</div></div><input type="range" min="0" max="1439" value="720" id="time-slider" class="w-full mt-6 h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer">`;const slider=container.querySelector("#time-slider"),displayContainer=container.querySelector("#time-of-day-container"),clockDisplay=container.querySelector("#tod-clock-display"),display24h=container.querySelector("#tod-24h-display"),label=container.querySelector("#tod-label");function update(totalMinutes){const hours24=Math.floor(totalMinutes/60),minutes=totalMinutes%60,hours12=0===hours24%12?12:hours24%12;clockDisplay.textContent=`${String(hours12).padStart(2,"0")}:${String(minutes).padStart(2,"0")}`,display24h.textContent=`(${String(hours24).padStart(2,"0")}:${String(minutes).padStart(2,"0")})`,hours24>=5&&hours24<12?(displayContainer.style.background="linear-gradient(to top, #fcd34d, #fca5a5)",label.textContent="Утро 🌅"):hours24>=12&&hours24<17?(displayContainer.style.background="linear-gradient(to top, #60a5fa, #38bdf8)",label.textContent="День ☀️"):hours24>=17&&hours24<22?(displayContainer.style.background="linear-gradient(to top, #fb923c, #f97316)",label.textContent="Вечер 🌇"):(displayContainer.style.background="linear-gradient(to top, #1e3a8a, #312e81)",label.textContent="Ночь 🌙")}slider.addEventListener("input",(e=>update(e.target.value))),update(720)}
         function initWhatTime(){const container=document.getElementById("what-time-mode");container.innerHTML=`<h2 class="text-3xl font-bold text-center mb-4">Который час?</h2><div id="what-time-clock" class="clock mb-6"><div class="hand hour-hand"></div><div class="hand minute-hand"></div><div class="center-dot"></div></div><div id="what-time-options" class="grid grid-cols-2 gap-4"></div><div id="what-time-feedback" class="text-center text-2xl font-bold h-8 mt-4"></div><div class="text-center mt-4"><button id="next-what-time" class="bg-cyan-600 text-white font-bold py-2 px-6 rounded-full">Следующий</button></div>`;const hourHand=container.querySelector(".hour-hand"),minuteHand=container.querySelector(".minute-hand"),optionsContainer=container.querySelector("#what-time-options"),feedbackEl=container.querySelector("#what-time-feedback");function generateQuestion(){feedbackEl.textContent="",optionsContainer.innerHTML="";const correctHour=Math.floor(12*Math.random()),correctMinute=5*Math.floor(12*Math.random());minuteHand.style.transform=`translateX(-50%) rotate(${6*correctMinute}deg)`,hourHand.style.transform=`translateX(-50%) rotate(${30*correctHour+correctMinute/2}deg)`;const options=new Set,correctAnswer=`${String(0===correctHour?12:correctHour).padStart(2,"0")}:${String(correctMinute).padStart(2,"0")}`;options.add(correctAnswer);for(;options.size<4;){const wrongHour=Math.floor(12*Math.random()),wrongMinute=5*Math.floor(12*Math.random());options.add(`${String(0===wrongHour?12:wrongHour).padStart(2,"0")}:${String(wrongMinute).padStart(2,"0")}`)}Array.from(options).sort((()=>.5-Math.random())).forEach((opt=>{const btn=document.createElement("button");btn.className="p-4 bg-cyan-500 text-white font-bold text-2xl rounded-lg hover:bg-cyan-600",btn.textContent=opt,btn.onclick=()=>{feedbackEl.classList.remove("text-green-500","text-red-500"),opt===correctAnswer?(feedbackEl.textContent="Правильно! ✅",feedbackEl.classList.add("text-green-500")):(feedbackEl.textContent=`Неверно. Правильно: ${correctAnswer}`,feedbackEl.classList.add("text-red-500")),optionsContainer.querySelectorAll("button").forEach((e=>e.disabled=!0))},optionsContainer.appendChild(btn)}))}container.querySelector("#next-what-time").onclick=generateQuestion,generateQuestion()}
