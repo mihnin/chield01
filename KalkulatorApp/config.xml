@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.example.kalkulator" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>Калькулятор-Тренажер</name>
+    <description>Мобильное приложение калькулятора-тренажера</description>
+    <author email="user@example.com" href="http://example.com">
+        Ваше Имя
+    </author>
+    <preference name="permissions" value="none"/>
+    <preference name="orientation" value="default" />
+    <preference name="target-device" value="universal" />
+    <preference name="fullscreen" value="false" />
+    <preference name="stay-in-webview" value="false" />
+    <preference name="webviewbounce" value="true" />
+    <preference name="UIWebViewBounce" value="true" />
+    <preference name="DisallowOverscroll" value="false" />
+    <preference name="android-minSdkVersion" value="22" />
+    <preference name="android-targetSdkVersion" value="35" />
+    <preference name="android-compileSdkVersion" value="35" />
+    <preference name="android-installLocation" value="auto" />
+    <preference name="SplashMaintainAspectRatio" value="true" />
+    <preference name="SplashShowOnlyFirstTime" value="false" />
+    <preference name="SplashScreen" value="screen" />
+    <preference name="SplashScreenDelay" value="3000" />
+    <access origin="*" />
+    <content src="index.html" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+</widget>
