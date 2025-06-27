@@ -28,4 +28,5 @@
     
     <plugin name="cordova-plugin-device" spec="^2.1.0" />
     <plugin name="cordova-plugin-dialogs" spec="^2.0.2" />
+    <plugin name="cordova-plugin-purchase" spec="^13.12.1" />
 </widget>
