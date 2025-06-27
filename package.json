@@ -23,7 +23,7 @@
   "license": "MIT",
   "devDependencies": {
     "cordova": "^11.0.0",
-    "cordova-android": "^11.0.0"
+    "cordova-android": "^14.0.1"
   },
   "cordova": {
     "platforms": [

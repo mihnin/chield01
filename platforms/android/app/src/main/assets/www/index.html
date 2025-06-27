@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <!-- CSP для Cordova -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' https://cdn.tailwindcss.com 'unsafe-inline' 'unsafe-eval'; media-src *; img-src 'self' data: content:; font-src 'self' https://fonts.gstatic.com data:;">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Супер-тренажер</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/app-styles.css">
+    <style>
+        body { font-family: 'Nunito', sans-serif; background: #f0f9ff; }
+        .main-container { max-width: 900px; margin: 2rem auto; padding: 1.5rem; background: white; border-radius: 24px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
+        .mode-button, .module-button { transition: all 0.3s ease; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: none; }
+        .mode-button:hover, .module-button:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+        .card { perspective: 1000px; }
+        .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+        .card.is-flipped .card-inner { transform: rotateY(180deg); }
+        .card-face { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; flex-direction: column; border-radius: 16px; text-align: center; padding: 1rem; }
+        .card-front { background: linear-gradient(135deg, #60a5fa, #3b82f6); color: white; }
+        .card-back { background: linear-gradient(135deg, #a78bfa, #8b5cf6); color: white; transform: rotateY(180deg); }
+        .clock { position: relative; width: 250px; height: 250px; border: 10px solid #3b82f6; border-radius: 50%; margin: 0 auto; background-color: #fff; }
+        .hand { position: absolute; left: 50%; bottom: 50%; background-color: #1e3a8a; transform-origin: bottom; border-radius: 10px; }
+        .hour-hand { width: 6px; height: 65px; transform: translateX(-50%); }
+        .minute-hand { width: 4px; height: 100px; transform: translateX(-50%); background-color: #3b82f6; }
+        .center-dot { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; background: #ef4444; border-radius: 50%; transform: translate(-50%, -50%); z-index: 10; }
+        .season-wheel { position: relative; width: 320px; height: 320px; margin: 0 auto; }
+        .month { position: absolute; width: 70px; height: 70px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; cursor: pointer; transition: all 0.2s ease; -webkit-user-select: none; user-select: none; }
+        .month:hover { transform: scale(1.1); box-shadow: 0 0 15px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="main-container">
+        <!-- Top Level Menu -->
+        <div id="top-level-menu">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-center text-gray-800 mb-4">Супер-тренажер</h1>
+            <p class="text-center text-gray-500 mb-8">Превратим скучную зубрежку в увлекательное приключение!</p>
+            <div class="bg-sky-50 border-2 border-dashed border-sky-200 rounded-2xl p-6 mb-10">
+                <h2 class="text-2xl font-bold text-sky-800 text-center mb-4">Наша методика для 100% результата</h2>
+                <ul class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sky-900">
+                    <li class="flex items-start"><span class="text-sky-500 mr-2">✓</span> <strong>Ассоциации и стихи:</strong> Создаем яркие образы для легкого запоминания.</li>
+                    <li class="flex items-start"><span class="text-sky-500 mr-2">✓</span> <strong>Обратные задачи:</strong> Учим думать как математик, а не просто отвечать на вопросы.</li>
+                    <li class="flex items-start"><span class="text-sky-500 mr-2">✓</span> <strong>Интерактив:</strong> Наглядно показываем, как работает умножение на самом деле.</li>
+                    <li class="flex items-start"><span class="text-sky-500 mr-2">✓</span> <strong>Поиск паттернов:</strong> Развиваем логику и интуицию с помощью таблицы Пифагора.</li>
+                    <li class="flex items-start"><span class="text-sky-500 mr-2">✓</span> <strong>Игровой формат:</strong> Превращаем проверку знаний в азартное соревнование.</li>
+                </ul>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                 <button onclick="showSubMenu('multiplication')" class="module-button p-6 bg-blue-500 text-white rounded-2xl flex flex-col items-center justify-center">
+                    <span class="text-5xl mb-2">🔢</span><h3 class="text-2xl font-bold">Мастер Умножения</h3>
+                </button>
+                 <button onclick="showSubMenu('time')" class="module-button p-6 bg-teal-500 text-white rounded-2xl flex flex-col items-center justify-center">
+                    <span class="text-5xl mb-2">⏰</span><h3 class="text-2xl font-bold">Повелитель Времени</h3>
+                </button>
+                 <button onclick="showSubMenu('calendar')" class="module-button p-6 bg-lime-600 text-white rounded-2xl flex flex-col items-center justify-center">
+                    <span class="text-5xl mb-2">📅</span><h3 class="text-2xl font-bold">Календарь Природы</h3>
+                </button>
+            </div>
+        </div>
+
+        <!-- Sub-Menus Containers -->
+        <div id="multiplication-menu" class="hidden"></div>
+        <div id="time-menu" class="hidden"></div>
+        <div id="calendar-menu" class="hidden"></div>
+
+        <!-- Mode Content Container -->
+        <div id="mode-container" class="hidden"></div>
+    </div>
+
+    <!-- Cordova Scripts -->
+    <script type="text/javascript" src="cordova.js"></script>
+    <script type="text/javascript" src="js/billing.js"></script>
+    <script type="text/javascript" src="js/game-modes.js"></script>
+    <script type="text/javascript" src="js/time-modes.js"></script>
+    <script type="text/javascript" src="js/app.js"></script>
+</body>
+</html>

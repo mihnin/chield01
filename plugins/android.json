@@ -1,0 +1,37 @@
+{
+  "prepare_queue": {
+    "installed": [],
+    "uninstalled": []
+  },
+  "config_munge": {
+    "files": {}
+  },
+  "installed_plugins": {
+    "cordova-plugin-statusbar": {
+      "PACKAGE_NAME": "com.supertrainer.app"
+    },
+    "cordova-plugin-device": {
+      "PACKAGE_NAME": "com.supertrainer.app"
+    },
+    "cordova-plugin-inappbrowser": {
+      "PACKAGE_NAME": "com.supertrainer.app"
+    },
+    "cordova-plugin-dialogs": {
+      "PACKAGE_NAME": "com.supertrainer.app"
+    },
+    "cordova-plugin-vibration": {
+      "PACKAGE_NAME": "com.supertrainer.app"
+    },
+    "cordova-plugin-network-information": {
+      "PACKAGE_NAME": "com.supertrainer.app"
+    },
+    "cordova-plugin-file": {
+      "ANDROIDX_WEBKIT_VERSION": "1.4.0",
+      "PACKAGE_NAME": "com.supertrainer.app"
+    },
+    "cordova-plugin-purchase": {
+      "PACKAGE_NAME": "com.supertrainer.app"
+    }
+  },
+  "dependent_plugins": {}
+}
