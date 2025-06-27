@@ -1,29 +1,45 @@
 {
-  "name": "com.example.kalkulator",
-  "displayName": "KalkulatorApp",
+  "name": "super-trainer-android",
   "version": "1.0.0",
-  "description": "A sample Apache Cordova application that responds to the deviceready event.",
+  "description": "Супер-тренажер - образовательное приложение для Android",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "cordova build android",
+    "build-release": "cordova build android --release",
+    "run": "cordova run android",
+    "prepare": "cordova prepare android",
+    "clean": "cordova clean android"
   },
   "keywords": [
-    "ecosystem:cordova"
+    "education",
+    "math",
+    "multiplication",
+    "time",
+    "calendar",
+    "children",
+    "learning"
   ],
-  "author": "Apache Cordova Team",
-  "license": "Apache-2.0",
+  "author": "Super Trainer Team",
+  "license": "MIT",
+  "devDependencies": {
+    "cordova": "^11.0.0",
+    "cordova-android": "^11.0.0"
+  },
   "cordova": {
     "platforms": [
-      "android",
-      "browser"
+      "android"
     ],
     "plugins": {
+      "cordova-plugin-whitelist": {},
+      "cordova-plugin-statusbar": {},
+      "cordova-plugin-device": {},
+      "cordova-plugin-splashscreen": {},
+      "cordova-plugin-inappbrowser": {},
+      "cordova-plugin-dialogs": {},
+      "cordova-plugin-vibration": {},
+      "cordova-plugin-network-information": {},
+      "cordova-plugin-file": {},
       "cordova-plugin-purchase": {}
     }
-  },
-  "devDependencies": {
-    "cordova-android": "^14.0.1",
-    "cordova-browser": "^7.0.0",
-    "cordova-plugin-purchase": "^13.12.1"
   }
 }

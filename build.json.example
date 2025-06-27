@@ -1,0 +1,10 @@
+{
+  "android": {
+    "release": {
+      "keystore": "super-trainer-release-key.keystore",
+      "storePassword": "замените-на-ваш-пароль-keystore",
+      "alias": "super-trainer",
+      "password": "замените-на-ваш-пароль-alias"
+    }
+  }
+}
